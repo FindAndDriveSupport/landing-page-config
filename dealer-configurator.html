@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dealer Landing Page Configurator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; color: #111827; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: .25rem; }
+  .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 1rem; }
+  .section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; }
+  .section-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+  .span2 { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 13px; color: #6b7280; }
+  .field input, .field textarea {
+    font-size: 14px; font-family: inherit; color: #111827;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 8px 10px; outline: none; transition: border-color .15s;
+  }
+  .field input:focus, .field textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+  .field textarea { min-height: 72px; resize: vertical; }
+  .contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .contact-row input {
+    font-size: 14px; font-family: inherit; color: #111827;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 8px 10px; outline: none; transition: border-color .15s; width: 100%;
+  }
+  .contact-row input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+  .color-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  .color-swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #e5e7eb; flex-shrink: 0; }
+  .color-label { font-size: 13px; color: #6b7280; flex: 1; }
+  .color-row input[type=color] {
+    width: 36px; height: 36px; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 2px; background: #fff; cursor: pointer; flex-shrink: 0;
+  }
+  .color-row input[type=text] {
+    width: 90px; font-size: 13px; font-family: monospace; color: #111827;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 6px 8px; outline: none;
+  }
+  .color-row input[type=text]:focus { border-color: #6366f1; }
+  .preview-wrap { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .prev-label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
+  .prev-nav { display: flex; align-items: center; gap: 8px; }
+  .prev-mark { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0; }
+  .prev-name { font-size: 13px; font-weight: 700; color: #111827; }
+  .prev-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; margin-left: auto; }
+  .prev-headline { font-size: 18px; font-weight: 800; color: #111827; }
+  .prev-sub { font-size: 16px; font-weight: 800; }
+  .prev-body { font-size: 12px; color: #6b7280; line-height: 1.5; }
+  .prev-btn { font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 8px; color: #fff; border: none; cursor: default; display: inline-block; }
+  .prev-footer { border-radius: 8px; padding: 8px 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .prev-footer span { font-size: 11px; color: rgba(255,255,255,.5); }
+  .prev-footer strong { color: rgba(255,255,255,.85); }
+  .gen-btn {
+    width: 100%; padding: 13px; font-size: 15px; font-weight: 700;
+    border-radius: 10px; background: #111827; color: #fff;
+    border: none; cursor: pointer; transition: background .15s;
+  }
+  .gen-btn:hover { background: #1f2937; }
+  .code-wrap { display: none; flex-direction: column; gap: 8px; }
+  .code-out {
+    background: #1e1e2e; border: 1px solid #374151; border-radius: 10px;
+    padding: 1rem; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12.5px;
+    color: #cdd6f4; white-space: pre; overflow-x: auto;
+    max-height: 360px; overflow-y: auto; line-height: 1.7;
+  }
+  .copy-btn {
+    width: 100%; padding: 11px; font-size: 14px; font-weight: 600;
+    border-radius: 10px; background: #fff; border: 1px solid #d1d5db;
+    cursor: pointer; color: #111827; transition: background .15s;
+  }
+  .copy-btn:hover { background: #f9fafb; }
+  .instructions { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem 1.25rem; }
+  .instructions h3 { font-size: 13px; font-weight: 700; color: #1d4ed8; margin-bottom: 8px; }
+  .instructions ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 4px; }
+  .instructions li { font-size: 13px; color: #1e40af; line-height: 1.5; }
+  .instructions code { background: #dbeafe; padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div>
+    <h1>Dealer Landing Page Configurator</h1>
+    <p class="subtitle">Fill in the dealer details, pick brand colours, then copy the generated config into <code style="background:#e5e7eb;padding:2px 6px;border-radius:4px;font-size:12px;">src/routes/index.tsx</code></p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Dealer info</div>
+    <div class="grid2">
+      <div class="field span2">
+        <label>Dealer name</label>
+        <input type="text" id="name" value="Keitzman Auto Exchange" oninput="upd()">
+      </div>
+      <div class="field">
+        <label>Logo letter</label>
+        <input type="text" id="logo-letter" value="K" maxlength="1" oninput="upd()">
+      </div>
+      <div class="field">
+        <label>WhatsApp number (international format)</label>
+        <input type="tel" id="wa-number" value="27795047616" oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>WhatsApp pre-filled message</label>
+        <input type="text" id="wa-msg" value="Hi, I'd like to enquire about vehicle finance." oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Seriti widget URL</label>
+        <input type="text" id="seriti-src" value="https://seriti.findndrive.co.za/?code=1A8C5C20-9EBE-4631-B1A0-D488D5400C69&branchCode=YCGY001&theme=yourcarguy" oninput="upd()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Hero content</div>
+    <div class="grid2">
+      <div class="field span2">
+        <label>Eyebrow tag — your speciality or tagline (shown above headline)</label>
+        <input type="text" id="eyebrow" value="Vehicle Finance Specialists" oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Main headline</label>
+        <input type="text" id="headline" value="We sell finance." oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Subheadline (shown in accent colour)</label>
+        <input type="text" id="subheadline" value="The car comes with it." oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Body text</label>
+        <textarea id="body-text" oninput="upd()">Walk the journey with us — from a free soft bureau check to the keys in your hand. We are deal makers.</textarea>
+      </div>
+      <div class="field span2">
+        <label>Showroom URL</label>
+        <input type="text" id="showroom-url" value="https://keitzmanautoexchange.co.za/showroom/" oninput="upd()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Contacts &amp; addresses</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
+        <span style="font-size:12px;color:#9ca3af;font-weight:600;">Label</span>
+        <span style="font-size:12px;color:#9ca3af;font-weight:600;">Number or address</span>
+      </div>
+      <div class="contact-row">
+        <input type="text" placeholder="e.g. Cape Town" id="c1l" value="Cape Town" oninput="upd()">
+        <input type="text" placeholder="Number or address" id="c1n" value="021-015-0000" oninput="upd()">
+      </div>
+      <div class="contact-row">
+        <input type="text" placeholder="e.g. JHB Sales" id="c2l" value="JHB Sales" oninput="upd()">
+        <input type="text" placeholder="Number or address" id="c2n" value="010-015-0008" oninput="upd()">
+      </div>
+      <div class="contact-row">
+        <input type="text" placeholder="e.g. JHB Finance" id="c3l" value="JHB Finance" oninput="upd()">
+        <input type="text" placeholder="Number or address" id="c3n" value="010-015-0005" oninput="upd()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Theme colours</div>
+    <div class="color-rows">
+      <div class="color-row">
+        <div class="color-swatch" id="sw-accent"></div>
+        <span class="color-label">Accent — subheadline, buttons, highlights</span>
+        <input type="color" id="col-accent" value="#c0392b" oninput="sh('accent')">
+        <input type="text" id="hex-accent" value="#c0392b" maxlength="7" oninput="sc('accent')">
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" id="sw-brand"></div>
+        <span class="color-label">Brand — footer background</span>
+        <input type="color" id="col-brand" value="#0f1623" oninput="sh('brand')">
+        <input type="text" id="hex-brand" value="#0f1623" maxlength="7" oninput="sc('brand')">
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" id="sw-green"></div>
+        <span class="color-label">Green — qualify section &amp; CTA button</span>
+        <input type="color" id="col-green" value="#1a5e33" oninput="sh('green')">
+        <input type="text" id="hex-green" value="#1a5e33" maxlength="7" oninput="sc('green')">
+      </div>
+    </div>
+
+    <div class="prev-label" style="margin-bottom:8px;">Live preview</div>
+    <div class="preview-wrap">
+      <div class="prev-nav">
+        <div class="prev-mark" id="p-mark">K</div>
+        <span class="prev-name" id="p-name">Keitzman Auto Exchange</span>
+        <div class="prev-badge" id="p-badge">● Vehicle Finance Specialists</div>
+      </div>
+      <div class="prev-headline" id="p-hl">We sell finance.</div>
+      <div class="prev-sub" id="p-sub">The car comes with it.</div>
+      <div class="prev-body" id="p-body">Walk the journey with us — from a free soft bureau check to the keys in your hand.</div>
+      <div><div class="prev-btn" id="p-btn">🎉 Get Qualified — Free Soft Check</div></div>
+      <div class="prev-footer" id="p-footer">
+        <span>Cape Town: <strong>021-015-0000</strong></span>
+        <span>JHB Sales: <strong>010-015-0008</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <button class="gen-btn" onclick="generate()">Generate DEALER config →</button>
+
+  <div class="code-wrap" id="code-wrap">
+    <div class="code-out" id="code-out"></div>
+    <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy to clipboard</button>
+  </div>
+
+  <div class="instructions">
+    <h3>How to use</h3>
+    <ol>
+      <li>Fill in all fields above and pick your brand colours</li>
+      <li>Click <strong>Generate DEALER config</strong></li>
+      <li>Click <strong>Copy to clipboard</strong></li>
+      <li>Open <code>src/routes/index.tsx</code> in your new dealer repo</li>
+      <li>Replace the entire <code>const DEALER = { ... };</code> block with the copied config</li>
+      <li>Push to GitHub — Cloudflare deploys automatically</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+function g(id) { return document.getElementById(id); }
+function v(id) { return g(id).value.trim(); }
+
+function sh(k) { g('hex-' + k).value = g('col-' + k).value; updatePreview(); }
+function sc(k) {
+  const hex = g('hex-' + k).value;
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) { g('col-' + k).value = hex; updatePreview(); }
+}
+
+function upd() { updatePreview(); }
+
+function updatePreview() {
+  const accent = v('hex-accent'), brand = v('hex-brand'), green = v('hex-green');
+  const name = v('name') || 'Dealer Name';
+  const letter = v('logo-letter') || '?';
+  const eyebrow = v('eyebrow') || 'Speciality';
+  const hl = v('headline') || 'Headline';
+  const sub = v('subheadline') || 'Subheadline';
+  const body = g('body-text').value.trim() || 'Body text.';
+  const c1l = v('c1l'), c1n = v('c1n'), c2l = v('c2l'), c2n = v('c2n');
+
+  g('sw-accent').style.background = accent;
+  g('sw-brand').style.background = brand;
+  g('sw-green').style.background = green;
+
+  g('p-mark').style.background = accent;
+  g('p-mark').textContent = letter;
+  g('p-name').textContent = name;
+
+  const badge = g('p-badge');
+  badge.textContent = '● ' + eyebrow;
+  badge.style.background = green + '22';
+  badge.style.color = green;
+
+  g('p-hl').textContent = hl;
+  g('p-sub').textContent = sub;
+  g('p-sub').style.color = accent;
+  g('p-body').textContent = body.length > 120 ? body.slice(0, 120) + '…' : body;
+  g('p-btn').style.background = green;
+  g('p-footer').style.background = brand;
+  g('p-footer').innerHTML = `<span>${c1l}: <strong>${c1n}</strong></span><span>${c2l}: <strong>${c2n}</strong></span>`;
+}
+
+function generate() {
+  const name = v('name'), letter = v('logo-letter');
+  const waNum = v('wa-number'), waMsg = v('wa-msg');
+  const seritiSrc = v('seriti-src');
+  const eyebrow = v('eyebrow'), headline = v('headline');
+  const subheadline = v('subheadline');
+  const bodyText = g('body-text').value.trim();
+  const showroomUrl = v('showroom-url');
+  const accent = v('hex-accent'), brand = v('hex-brand'), green = v('hex-green');
+  const c1l = v('c1l'), c1n = v('c1n');
+  const c2l = v('c2l'), c2n = v('c2n');
+  const c3l = v('c3l'), c3n = v('c3n');
+
+  const snippet =
+`const DEALER = {
+  name: "${name}",
+  logoLetter: "${letter}",
+  theme: {
+    accent: "${accent}",
+    brand: "${brand}",
+    logo: "${accent}",
+    green: "${green}",
+    greenBg: "${green}22",
+    greenBdr: "${green}44",
+  },
+  hero: {
+    eyebrow: "${eyebrow}",
+    headline: "${headline}",
+    headlineSub: "${subheadline}",
+    body: "${bodyText.replace(/"/g, '\\"')}",
+    assurance: "Soft check only · No credit score impact · Free",
+  },
+  softCheck: {
+    heading: "Start with a free soft bureau check",
+    body: "Gives us a clear picture of where you are — so we can meet your specific needs.",
+    pills: ["✓ Free", "✓ Soft check only", "✓ No credit impact"],
+  },
+  showroom: {
+    eyebrow: "Browse Stock",
+    heading: "Our Showroom",
+    openLabel: "Open full showroom ↗",
+    showroomUrl: "${showroomUrl}",
+    iframeHeight: "780px",
+  },
+  seriti: {
+    src: "${seritiSrc}",
+    styleUrl: "https://seriti.findndrive.co.za/fndwidget-style.css",
+    scriptUrl: "https://seriti.findndrive.co.za/fndwidget-script.js",
+    iconUrl: "https://seriti.findndrive.co.za/seritiicon.svg",
+  },
+  whatsapp: {
+    number: "${waNum}",
+    message: "${waMsg}",
+  },
+  footer: {
+    contacts: [
+      { label: "${c1l}", number: "${c1n}" },
+      { label: "${c2l}", number: "${c2n}" },
+      { label: "${c3l}", number: "${c3n}" },
+    ],
+    copyright: "© ${name}",
+  },
+};`;
+
+  g('code-out').textContent = snippet;
+  g('code-wrap').style.display = 'flex';
+  g('code-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(g('code-out').textContent).then(() => {
+    const btn = g('copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = 'Copy to clipboard'; }, 2000);
+  });
+}
+
+updatePreview();
+</script>
+</body>
+</html>
