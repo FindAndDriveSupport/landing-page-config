@@ -1,380 +1,353 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import qualBlacklisted from "@/assets/qual-blacklisted.png";
-import qualIncome from "@/assets/qual-income.png";
-import qualAccounts from "@/assets/qual-accounts.png";
-import qualLicense from "@/assets/qual-license.png";
-
-// ─── Google Ads ───────────────────────────────────────────────────────────────
-// Replace both placeholders with your real IDs from:
-// Google Ads → Tools & Settings → Conversions → [conversion] → Tag setup
-const G_ADS_ID            = "AW-XXXXXXXXXX";          // Conversion ID
-const G_ADS_PAGE_LABEL    = "AW-XXXXXXXXXX/AAAAAAAAAA"; // Page landing label
-const G_ADS_QUALIFY_LABEL = "AW-XXXXXXXXXX/BBBBBBBBBB"; // Get Qualified click label
-
-declare global {
-  interface Window {
-    dataLayer: unknown[];
-    gtag: (...args: unknown[]) => void;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dealer Landing Page Configurator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; color: #111827; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: .25rem; }
+  .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 1rem; }
+  .section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; }
+  .section-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+  .span2 { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 13px; color: #6b7280; }
+  .field input, .field textarea {
+    font-size: 14px; font-family: inherit; color: #111827;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 8px 10px; outline: none; transition: border-color .15s;
   }
+  .field input:focus, .field textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+  .field textarea { min-height: 72px; resize: vertical; }
+  .contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .contact-row input {
+    font-size: 14px; font-family: inherit; color: #111827;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 8px 10px; outline: none; transition: border-color .15s; width: 100%;
+  }
+  .contact-row input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+  .color-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  .color-swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #e5e7eb; flex-shrink: 0; }
+  .color-label { font-size: 13px; color: #6b7280; flex: 1; }
+  .color-row input[type=color] {
+    width: 36px; height: 36px; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 2px; background: #fff; cursor: pointer; flex-shrink: 0;
+  }
+  .color-row input[type=text] {
+    width: 90px; font-size: 13px; font-family: monospace; color: #111827;
+    background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 6px 8px; outline: none;
+  }
+  .color-row input[type=text]:focus { border-color: #6366f1; }
+  .preview-wrap { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .prev-label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
+  .prev-nav { display: flex; align-items: center; gap: 8px; }
+  .prev-mark { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0; }
+  .prev-name { font-size: 13px; font-weight: 700; color: #111827; }
+  .prev-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; margin-left: auto; }
+  .prev-headline { font-size: 18px; font-weight: 800; color: #111827; }
+  .prev-sub { font-size: 16px; font-weight: 800; }
+  .prev-body { font-size: 12px; color: #6b7280; line-height: 1.5; }
+  .prev-btn { font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 8px; color: #fff; border: none; cursor: default; display: inline-block; }
+  .prev-footer { border-radius: 8px; padding: 8px 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .prev-footer span { font-size: 11px; color: rgba(255,255,255,.5); }
+  .prev-footer strong { color: rgba(255,255,255,.85); }
+  .gen-btn {
+    width: 100%; padding: 13px; font-size: 15px; font-weight: 700;
+    border-radius: 10px; background: #111827; color: #fff;
+    border: none; cursor: pointer; transition: background .15s;
+  }
+  .gen-btn:hover { background: #1f2937; }
+  .code-wrap { display: none; flex-direction: column; gap: 8px; }
+  .code-out {
+    background: #1e1e2e; border: 1px solid #374151; border-radius: 10px;
+    padding: 1rem; font-family: 'Fira Code', 'Courier New', monospace; font-size: 12.5px;
+    color: #cdd6f4; white-space: pre; overflow-x: auto;
+    max-height: 360px; overflow-y: auto; line-height: 1.7;
+  }
+  .copy-btn {
+    width: 100%; padding: 11px; font-size: 14px; font-weight: 600;
+    border-radius: 10px; background: #fff; border: 1px solid #d1d5db;
+    cursor: pointer; color: #111827; transition: background .15s;
+  }
+  .copy-btn:hover { background: #f9fafb; }
+  .instructions { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem 1.25rem; }
+  .instructions h3 { font-size: 13px; font-weight: 700; color: #1d4ed8; margin-bottom: 8px; }
+  .instructions ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 4px; }
+  .instructions li { font-size: 13px; color: #1e40af; line-height: 1.5; }
+  .instructions code { background: #dbeafe; padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div>
+    <h1>Dealer Landing Page Configurator</h1>
+    <p class="subtitle">Fill in the dealer details, pick brand colours, then copy the generated config into <code style="background:#e5e7eb;padding:2px 6px;border-radius:4px;font-size:12px;">src/routes/index.tsx</code></p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Dealer info</div>
+    <div class="grid2">
+      <div class="field span2">
+        <label>Dealer name</label>
+        <input type="text" id="name" value="Keitzman Auto Exchange" oninput="upd()">
+      </div>
+      <div class="field">
+        <label>Logo letter</label>
+        <input type="text" id="logo-letter" value="K" maxlength="1" oninput="upd()">
+      </div>
+      <div class="field">
+        <label>WhatsApp number (international format)</label>
+        <input type="tel" id="wa-number" value="27795047616" oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>WhatsApp pre-filled message</label>
+        <input type="text" id="wa-msg" value="Hi, I'd like to enquire about vehicle finance." oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Seriti widget URL</label>
+        <input type="text" id="seriti-src" value="https://seriti.findndrive.co.za/?code=1A8C5C20-9EBE-4631-B1A0-D488D5400C69&branchCode=YCGY001&theme=yourcarguy" oninput="upd()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Hero content</div>
+    <div class="grid2">
+      <div class="field span2">
+        <label>Eyebrow tag — your speciality or tagline (shown above headline)</label>
+        <input type="text" id="eyebrow" value="Vehicle Finance Specialists" oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Main headline</label>
+        <input type="text" id="headline" value="We sell finance." oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Subheadline (shown in accent colour)</label>
+        <input type="text" id="subheadline" value="The car comes with it." oninput="upd()">
+      </div>
+      <div class="field span2">
+        <label>Body text</label>
+        <textarea id="body-text" oninput="upd()">Walk the journey with us — from a free soft bureau check to the keys in your hand. We are deal makers.</textarea>
+      </div>
+      <div class="field span2">
+        <label>Showroom URL</label>
+        <input type="text" id="showroom-url" value="https://keitzmanautoexchange.co.za/showroom/" oninput="upd()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Contacts &amp; addresses</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
+        <span style="font-size:12px;color:#9ca3af;font-weight:600;">Label</span>
+        <span style="font-size:12px;color:#9ca3af;font-weight:600;">Number or address</span>
+      </div>
+      <div class="contact-row">
+        <input type="text" placeholder="e.g. Cape Town" id="c1l" value="Cape Town" oninput="upd()">
+        <input type="text" placeholder="Number or address" id="c1n" value="021-015-0000" oninput="upd()">
+      </div>
+      <div class="contact-row">
+        <input type="text" placeholder="e.g. JHB Sales" id="c2l" value="JHB Sales" oninput="upd()">
+        <input type="text" placeholder="Number or address" id="c2n" value="010-015-0008" oninput="upd()">
+      </div>
+      <div class="contact-row">
+        <input type="text" placeholder="e.g. JHB Finance" id="c3l" value="JHB Finance" oninput="upd()">
+        <input type="text" placeholder="Number or address" id="c3n" value="010-015-0005" oninput="upd()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Theme colours</div>
+    <div class="color-rows">
+      <div class="color-row">
+        <div class="color-swatch" id="sw-accent"></div>
+        <span class="color-label">Accent — subheadline, buttons, highlights</span>
+        <input type="color" id="col-accent" value="#c0392b" oninput="sh('accent')">
+        <input type="text" id="hex-accent" value="#c0392b" maxlength="7" oninput="sc('accent')">
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" id="sw-brand"></div>
+        <span class="color-label">Brand — footer background</span>
+        <input type="color" id="col-brand" value="#0f1623" oninput="sh('brand')">
+        <input type="text" id="hex-brand" value="#0f1623" maxlength="7" oninput="sc('brand')">
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" id="sw-green"></div>
+        <span class="color-label">Green — qualify section &amp; CTA button</span>
+        <input type="color" id="col-green" value="#1a5e33" oninput="sh('green')">
+        <input type="text" id="hex-green" value="#1a5e33" maxlength="7" oninput="sc('green')">
+      </div>
+    </div>
+
+    <div class="prev-label" style="margin-bottom:8px;">Live preview</div>
+    <div class="preview-wrap">
+      <div class="prev-nav">
+        <div class="prev-mark" id="p-mark">K</div>
+        <span class="prev-name" id="p-name">Keitzman Auto Exchange</span>
+        <div class="prev-badge" id="p-badge">● Vehicle Finance Specialists</div>
+      </div>
+      <div class="prev-headline" id="p-hl">We sell finance.</div>
+      <div class="prev-sub" id="p-sub">The car comes with it.</div>
+      <div class="prev-body" id="p-body">Walk the journey with us — from a free soft bureau check to the keys in your hand.</div>
+      <div><div class="prev-btn" id="p-btn">🎉 Get Qualified — Free Soft Check</div></div>
+      <div class="prev-footer" id="p-footer">
+        <span>Cape Town: <strong>021-015-0000</strong></span>
+        <span>JHB Sales: <strong>010-015-0008</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <button class="gen-btn" onclick="generate()">Generate DEALER config →</button>
+
+  <div class="code-wrap" id="code-wrap">
+    <div class="code-out" id="code-out"></div>
+    <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy to clipboard</button>
+  </div>
+
+  <div class="instructions">
+    <h3>How to use</h3>
+    <ol>
+      <li>Fill in all fields above and pick your brand colours</li>
+      <li>Click <strong>Generate DEALER config</strong></li>
+      <li>Click <strong>Copy to clipboard</strong></li>
+      <li>Open <code>src/routes/index.tsx</code> in your new dealer repo</li>
+      <li>Replace the entire <code>const DEALER = { ... };</code> block with the copied config</li>
+      <li>Push to GitHub — Cloudflare deploys automatically</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+function g(id) { return document.getElementById(id); }
+function v(id) { return g(id).value.trim(); }
+
+function sh(k) { g('hex-' + k).value = g('col-' + k).value; updatePreview(); }
+function sc(k) {
+  const hex = g('hex-' + k).value;
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) { g('col-' + k).value = hex; updatePreview(); }
 }
 
-function gtag(...args: unknown[]) {
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(args);
+function upd() { updatePreview(); }
+
+function updatePreview() {
+  const accent = v('hex-accent'), brand = v('hex-brand'), green = v('hex-green');
+  const name = v('name') || 'Dealer Name';
+  const letter = v('logo-letter') || '?';
+  const eyebrow = v('eyebrow') || 'Speciality';
+  const hl = v('headline') || 'Headline';
+  const sub = v('subheadline') || 'Subheadline';
+  const body = g('body-text').value.trim() || 'Body text.';
+  const c1l = v('c1l'), c1n = v('c1n'), c2l = v('c2l'), c2n = v('c2n');
+
+  g('sw-accent').style.background = accent;
+  g('sw-brand').style.background = brand;
+  g('sw-green').style.background = green;
+
+  g('p-mark').style.background = accent;
+  g('p-mark').textContent = letter;
+  g('p-name').textContent = name;
+
+  const badge = g('p-badge');
+  badge.textContent = '● ' + eyebrow;
+  badge.style.background = green + '22';
+  badge.style.color = green;
+
+  g('p-hl').textContent = hl;
+  g('p-sub').textContent = sub;
+  g('p-sub').style.color = accent;
+  g('p-body').textContent = body.length > 120 ? body.slice(0, 120) + '…' : body;
+  g('p-btn').style.background = green;
+  g('p-footer').style.background = brand;
+  g('p-footer').innerHTML = `<span>${c1l}: <strong>${c1n}</strong></span><span>${c2l}: <strong>${c2n}</strong></span>`;
 }
 
-function trackPageLanding() {
-  if (typeof window === "undefined" || !window.gtag) return;
-  window.gtag("event", "conversion", { send_to: G_ADS_PAGE_LABEL });
-}
+function generate() {
+  const name = v('name'), letter = v('logo-letter');
+  const waNum = v('wa-number'), waMsg = v('wa-msg');
+  const seritiSrc = v('seriti-src');
+  const eyebrow = v('eyebrow'), headline = v('headline');
+  const subheadline = v('subheadline');
+  const bodyText = g('body-text').value.trim();
+  const showroomUrl = v('showroom-url');
+  const accent = v('hex-accent'), brand = v('hex-brand'), green = v('hex-green');
+  const c1l = v('c1l'), c1n = v('c1n');
+  const c2l = v('c2l'), c2n = v('c2n');
+  const c3l = v('c3l'), c3n = v('c3n');
 
-function trackGetQualified() {
-  if (typeof window === "undefined" || !window.gtag) return;
-  window.gtag("event", "conversion", { send_to: G_ADS_QUALIFY_LABEL });
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-const DEALER = {
-  name: "Keitzman Auto Exchange",
-  logoLetter: "K",
+  const snippet =
+`const DEALER = {
+  name: "${name}",
+  logoLetter: "${letter}",
+  theme: {
+    accent: "${accent}",
+    brand: "${brand}",
+    logo: "${accent}",
+    green: "${green}",
+    greenBg: "${green}22",
+    greenBdr: "${green}44",
+  },
   hero: {
-    eyebrow: "Vehicle Finance Specialists",
-    headline: "Your wheels. Your choice.",
-    headlineSub: "Our finance.",
-    body: "We walk the journey with you — from a free affordability check to the moment you receive your keys. We make deals happen.",
-    assurance: "Keitzman Finance is an authorised financial services and credit provider.",
+    eyebrow: "${eyebrow}",
+    headline: "${headline}",
+    headlineSub: "${subheadline}",
+    body: "${bodyText.replace(/"/g, '\\"')}",
+    assurance: "Soft check only · No credit score impact · Free",
   },
   softCheck: {
-    heading: "Start with a pre-screening",
-    body: "This gives us a clear picture of where you are — so we can meet your specific needs.",
-    pills: ["✓ Free", "✓ Soft credit check only", "✓ No credit impact"],
+    heading: "Start with a free soft bureau check",
+    body: "Gives us a clear picture of where you are — so we can meet your specific needs.",
+    pills: ["✓ Free", "✓ Soft check only", "✓ No credit impact"],
   },
   showroom: {
     eyebrow: "Browse Stock",
     heading: "Our Showroom",
     openLabel: "Open full showroom ↗",
-    showroomUrl: "https://keitzmanautoexchange.co.za/showroom/",
+    showroomUrl: "${showroomUrl}",
     iframeHeight: "780px",
   },
   seriti: {
-    src: "https://seriti.findndrive.co.za/?code=1A8C5C20-9EBE-4631-B1A0-D488D5400C69&branchCode=YCGY001&theme=yourcarguy",
+    src: "${seritiSrc}",
     styleUrl: "https://seriti.findndrive.co.za/fndwidget-style.css",
     scriptUrl: "https://seriti.findndrive.co.za/fndwidget-script.js",
     iconUrl: "https://seriti.findndrive.co.za/seritiicon.svg",
   },
   whatsapp: {
-    number: "27795047616",
-    message: "Hi Keitzman Auto Exchange, I'd like to enquire about vehicle finance.",
+    number: "${waNum}",
+    message: "${waMsg}",
   },
   footer: {
     contacts: [
-      { label: "Cape Town", number: "021-015-0000" },
-      { label: "JHB Sales", number: "010-015-0008" },
-      { label: "JHB Finance", number: "010-015-0005" },
-      { label: "Cape Town Branch", number: "443 Koeberg Road, Milnerton, 7441, WC" },
-      { label: "Johannesburg Branch", number: "198 Bram Fischer Drive, Randburg, 2194, Gauteng" },
+      { label: "${c1l}", number: "${c1n}" },
+      { label: "${c2l}", number: "${c2n}" },
+      { label: "${c3l}", number: "${c3n}" },
     ],
-    copyright: "© Keitzman Auto Exchange",
+    copyright: "© ${name}",
   },
-};
+};`;
 
-const QUALIFY_ITEMS = [
-  { id: "clean", icon: qualBlacklisted, label: "I'm not blacklisted or under judgement" },
-  { id: "income", icon: qualIncome, label: "I earn above R10,000 / month" },
-  { id: "paid", icon: qualAccounts, label: "I pay my accounts in full & on time" },
-  { id: "docs", icon: qualLicense, label: "I have a valid driver's license" },
-];
-
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Keitzman Auto Exchange — Vehicle Finance Specialists" },
-      { name: "description", content: "Walk the journey with us — from a free soft bureau check to the keys in your hand. We are deal makers." },
-      { property: "og:title", content: "Keitzman Auto Exchange" },
-      { property: "og:description", content: "Vehicle finance specialists. Keitzman Finance is an authorised financial services and credit provider." },
-    ],
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..60,700;12..60,800&family=DM+Sans:wght@300;400;500;600;700&display=swap" },
-      { rel: "stylesheet", href: DEALER.seriti.styleUrl },
-    ],
-    // ─── Google Ads Global Site Tag ─────────────────────────────────────────
-    // Loads gtag.js and initialises tracking. Replace AW-XXXXXXXXXX with your
-    // Conversion ID (Google Ads → Tools & Settings → Conversions → Tag setup).
-    scripts: [
-      {
-        src: `https://www.googletagmanager.com/gtag/js?id=${G_ADS_ID}`,
-        async: true,
-      },
-      {
-        children: `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${G_ADS_ID}');
-        `,
-      },
-    ],
-    // ────────────────────────────────────────────────────────────────────────
-  }),
-  component: Index,
-});
-
-function Index() {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const allSelected = selected.size === QUALIFY_ITEMS.length;
-
-  useEffect(() => {
-    // Load Seriti widget script
-    const existing = document.getElementById("fndwidget-script");
-    if (existing) return;
-    const script = document.createElement("script");
-    script.id = "fndwidget-script";
-    script.src = DEALER.seriti.scriptUrl;
-    script.async = true;
-    document.body.appendChild(script);
-
-    // Track page landing conversion
-    trackPageLanding();
-
-    return () => {
-      const s = document.getElementById("fndwidget-script");
-      if (s) document.body.removeChild(s);
-    };
-  }, []);
-
-  function toggleQual(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  function openSeriti() {
-    // Track "Get Qualified" click conversion
-    trackGetQualified();
-
-    window.open(
-      "https://seriti.findndrive.co.za/?code=36CD304E-8EC3-4C39-A36D-73DBAB08E617&branchCode=KAEF001",
-      "_blank",
-      "noopener,noreferrer"
-    );
-  }
-
-  const whatsappUrl = `https://wa.me/${DEALER.whatsapp.number}?text=${encodeURIComponent(DEALER.whatsapp.message)}`;
-
-  return (
-    <>
-      <style>{css}</style>
-      <div className="page">
-        <nav>
-          <div className="nav-logo">
-            <div className="nav-mark">{DEALER.logoLetter}</div>
-            <div className="nav-name">{DEALER.name}</div>
-          </div>
-        </nav>
-
-        <section className="hero">
-          <div className="hero-left">
-            <div className="hero-badge">
-              <span className="badge-dot" />
-              {DEALER.hero.eyebrow}
-            </div>
-            <h1 className="hero-h1">{DEALER.hero.headline}</h1>
-            <div className="hero-h1-sub">{DEALER.hero.headlineSub}</div>
-            <div className="hero-rule" />
-            <p className="hero-body">{DEALER.hero.body}</p>
-            <div className="hero-assurance">
-              <span className="assurance-check">✓</span>
-              {DEALER.hero.assurance}
-            </div>
-          </div>
-
-          <div className="hero-right">
-            <div className="hero-right-label">Do you qualify?</div>
-            <div className="qual-grid">
-              {QUALIFY_ITEMS.map((q) => {
-                const isSelected = selected.has(q.id);
-                return (
-                  <button
-                    key={q.id}
-                    className={`qual-card${isSelected ? " qual-card--selected" : ""}`}
-                    onClick={() => toggleQual(q.id)}
-                    aria-pressed={isSelected}
-                    type="button"
-                  >
-                    {isSelected && <span className="qual-check">✓</span>}
-                    <img src={q.icon} alt={q.label} className="qual-card-icon" width={48} height={48} loading="lazy" />
-                    <span className="qual-card-label">{q.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className={`qual-cta${allSelected ? " qual-cta--visible" : ""}`}>
-              <button className="get-qualified-btn" onClick={openSeriti} type="button">
-                   Get Qualified
-              </button>
-              <p className="qual-cta-note">No credit score impact · Takes 2 minutes</p>
-            </div>
-
-            {!allSelected && (
-              <p className="qual-hint">
-                {selected.size === 0
-                  ? "Tap each box that applies to you"
-                  : `${QUALIFY_ITEMS.length - selected.size} more to go…`}
-              </p>
-            )}
-          </div>
-        </section>
-
-        <div className="softcheck-bar">
-          <div className="softcheck-inner">
-            <div className="softcheck-left">
-              <div className="softcheck-icon">🔍</div>
-              <div className="softcheck-text">
-                <h4>{DEALER.softCheck.heading}</h4>
-                <p>{DEALER.softCheck.body}</p>
-              </div>
-            </div>
-            <div className="softcheck-pills">
-              {DEALER.softCheck.pills.map((p) => (
-                <span key={p} className="pill">{p}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <section id="showroom" className="showroom-section">
-          <div className="showroom-header">
-            <div>
-              <div className="showroom-eyebrow">{DEALER.showroom.eyebrow}</div>
-              <div className="showroom-heading">{DEALER.showroom.heading}</div>
-            </div>
-            <a href={DEALER.showroom.showroomUrl} target="_blank" rel="noopener noreferrer" className="showroom-link">
-              {DEALER.showroom.openLabel}
-            </a>
-          </div>
-          <div className="showroom-frame-wrap">
-            <iframe
-              src={DEALER.showroom.showroomUrl}
-              style={{ height: DEALER.showroom.iframeHeight }}
-              title="Showroom"
-              loading="lazy"
-            />
-          </div>
-        </section>
-
-        <footer>
-          <div className="footer-contacts">
-            {DEALER.footer.contacts.map((c) => (
-              <div key={c.label} className="footer-contact">
-                {c.label}: <strong>{c.number}</strong>
-              </div>
-            ))}
-          </div>
-          <div className="footer-copy">{DEALER.footer.copyright}</div>
-        </footer>
-
-        {/* Seriti widget */}
-        <div
-          id="fndwidget"
-          data-src={DEALER.seriti.src}
-          data-icon={DEALER.seriti.iconUrl}
-        />
-
-        {/* WhatsApp floating button */}
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="whatsapp-btn"
-          aria-label="Chat on WhatsApp"
-        >
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="#fff" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-          </svg>
-          <span>Chat with us</span>
-        </a>
-      </div>
-    </>
-  );
+  g('code-out').textContent = snippet;
+  g('code-wrap').style.display = 'flex';
+  g('code-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-const css = `
-.page { --accent: #c0392b; --brand: #0f1623; --logo: #c0392b;
-  --green: #1a5e33; --green-bg: #e8f8f0; --green-bdr: #c3e8d4;
-  --border: #e5e7eb; --soft: #f3f4f6; --muted: #6b7280;
-  --display: 'Bricolage Grotesque', sans-serif; --body: 'DM Sans', system-ui, sans-serif;
-  font-family: var(--body); color: #111827; background: #fff; overflow-x: hidden; }
-.page *, .page *::before, .page *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-.page nav { position: fixed; top: 0; left: 0; right: 0; z-index: 300; height: 58px; display: flex; align-items: center; padding: 0 32px; justify-content: space-between; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
-.nav-logo { display: flex; align-items: center; gap: 10px; }
-.nav-mark { width: 32px; height: 32px; border-radius: 7px; background: var(--logo); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 16px; font-weight: 800; color: #fff; }
-.nav-name { font-family: var(--display); font-size: 14px; font-weight: 700; color: #111827; letter-spacing: -.01em; }
-.nav-link { font-size: 13px; font-weight: 600; color: #111827; text-decoration: none; }
-.hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; padding-top: 58px; }
-@media(max-width: 768px) { .hero { grid-template-columns: 1fr; min-height: auto; } }
-.hero-left { background: #fff; display: flex; flex-direction: column; justify-content: center; padding: 64px 48px; position: relative; }
-.hero-left::after { content: ""; position: absolute; right: 0; top: 8%; bottom: 8%; width: 1px; background: var(--border); }
-@media(max-width:768px){ .hero-left::after { display: none; } }
-.hero-badge { display: inline-flex; align-items: center; gap: 7px; background: var(--green-bg); color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 5px 12px; border-radius: 20px; margin-bottom: 28px; width: fit-content; }
-.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: kpulse 2s infinite; display: inline-block; }
-@keyframes kpulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
-.hero-h1 { font-family: var(--display); font-size: clamp(32px, 3.8vw, 54px); font-weight: 800; line-height: 1.08; letter-spacing: -.025em; color: #111827; margin-bottom: 6px; }
-.hero-h1-sub { font-family: var(--display); font-size: clamp(30px, 3.6vw, 50px); font-weight: 800; line-height: 1.08; letter-spacing: -.025em; color: var(--accent); margin-bottom: 20px; }
-.hero-rule { width: 40px; height: 3px; border-radius: 2px; background: var(--accent); margin-bottom: 20px; }
-.hero-body { font-size: 15px; color: var(--muted); font-weight: 300; line-height: 1.75; max-width: 360px; margin-bottom: 24px; }
-.hero-assurance { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #9ca3af; }
-.assurance-check { color: var(--green); }
-.hero-right { background: var(--soft); display: flex; flex-direction: column; justify-content: center; padding: 48px 36px; gap: 16px; }
-.hero-right-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.qual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.qual-card { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; transition: border-color .18s, transform .15s, box-shadow .15s, background .18s; cursor: pointer; position: relative; font-family: var(--body); }
-.qual-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07); }
-.qual-card--selected { border-color: var(--green) !important; background: var(--green-bg) !important; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,94,51,.12); }
-.qual-check { position: absolute; top: 10px; right: 12px; width: 20px; height: 20px; border-radius: 50%; background: var(--green); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; animation: popIn .2s ease; }
-@keyframes popIn { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
-.qual-card-icon { width: 48px; height: 48px; object-fit: contain; }
-.qual-card-label { font-size: 12px; font-weight: 600; color: #111827; line-height: 1.4; }
-.qual-cta { display: flex; flex-direction: column; align-items: center; gap: 6px; max-height: 0; overflow: hidden; opacity: 0; transition: max-height .4s ease, opacity .35s ease; }
-.qual-cta--visible { max-height: 120px; opacity: 1; }
-.get-qualified-btn { width: 100%; padding: 14px 24px; background: var(--green); color: #fff; border: none; border-radius: 10px; font-family: var(--body); font-size: 15px; font-weight: 700; cursor: pointer; transition: background .18s, transform .15s; }
-.get-qualified-btn:hover { background: #145228; transform: translateY(-1px); }
-.qual-cta-note { font-size: 11px; color: var(--muted); }
-.qual-hint { font-size: 12px; color: var(--muted); text-align: center; }
-@media(max-width:768px){ .hero-left { padding: 40px 24px; } .hero-right { padding: 32px 24px; } }
-.softcheck-bar { background: var(--green-bg); border-top: 1px solid var(--green-bdr); border-bottom: 1px solid var(--green-bdr); padding: 20px 32px; }
-.softcheck-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.softcheck-left { display: flex; align-items: center; gap: 14px; }
-.softcheck-icon { font-size: 26px; flex-shrink: 0; }
-.softcheck-text h4 { font-size: 14px; font-weight: 700; color: var(--green); margin-bottom: 2px; }
-.softcheck-text p { font-size: 12px; color: #3a7a54; line-height: 1.4; }
-.softcheck-pills { display: flex; gap: 7px; flex-wrap: wrap; }
-.pill { background: #fff; border: 1px solid #a9dfbf; color: var(--green); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
-.showroom-section { background: #f9fafb; padding: 48px 0 0; }
-.showroom-header { max-width: 1100px; margin: 0 auto; padding: 0 32px 24px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.showroom-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-.showroom-heading { font-family: var(--display); font-size: clamp(22px, 3vw, 32px); font-weight: 800; letter-spacing: -.02em; }
-.showroom-link { font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 4px; transition: gap .15s; }
-.showroom-link:hover { gap: 8px; }
-.showroom-frame-wrap { position: relative; width: 100%; background: var(--soft); border-top: 1px solid var(--border); }
-.showroom-frame-wrap iframe { width: 100%; border: none; display: block; }
-.page footer { background: var(--brand); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.footer-contacts { display: flex; gap: 24px; flex-wrap: wrap; }
-.footer-contact { font-size: 12px; color: rgba(255,255,255,.4); }
-.footer-contact strong { color: rgba(255,255,255,.8); }
-.footer-copy { font-size: 11px; color: rgba(255,255,255,.25); }
-@media(max-width:600px){ .softcheck-inner { flex-direction: column; align-items: flex-start; } }
-.whatsapp-btn { position: fixed; bottom: 24px; left: 24px; z-index: 400; display: flex; align-items: center; gap: 10px; background: #25d366; color: #fff; font-family: var(--body); font-size: 14px; font-weight: 700; padding: 12px 20px; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 20px rgba(37,211,102,.4); transition: transform .15s, box-shadow .15s; }
-.whatsapp-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,211,102,.5); }
-@media(max-width: 768px) { .whatsapp-btn { left: auto; right: 24px; bottom: 90px; } }
-`;
+function copyCode() {
+  navigator.clipboard.writeText(g('code-out').textContent).then(() => {
+    const btn = g('copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = 'Copy to clipboard'; }, 2000);
+  });
+}
+
+updatePreview();
+</script>
+</body>
+</html>
