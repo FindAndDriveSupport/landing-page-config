@@ -161,13 +161,11 @@ function Index() {
     // Track "Get Qualified" click conversion
     trackGetQualified();
 
-    const widget = document.getElementById("fndwidget");
-    if (widget) {
-      widget.style.display = "block";
-      widget.dispatchEvent(new Event("click", { bubbles: true }));
-    }
-    const icon = document.querySelector<HTMLElement>(".fnd-widget-icon, .fnd-trigger, [data-fnd-trigger]");
-    if (icon) icon.click();
+    window.open(
+      "https://seriti.findndrive.co.za/?code=36CD304E-8EC3-4C39-A36D-73DBAB08E617&branchCode=KAEF001",
+      "_blank",
+      "noopener,noreferrer"
+    );
   }
 
   const whatsappUrl = `https://wa.me/${DEALER.whatsapp.number}?text=${encodeURIComponent(DEALER.whatsapp.message)}`;
